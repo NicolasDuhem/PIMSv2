@@ -1,0 +1,8 @@
+import { createPaintRun } from "@/lib/paint-actions";
+import { listActiveColours, listActivePartTypes } from "@/lib/paint-db";
+
+export default async function NewRunPage() {
+  const [parts, colours] = await Promise.all([listActivePartTypes(), listActiveColours()]);
+  const slots = Array.from({ length: 6 });
+  return <><h1>Create/load paint run</h1>{(parts.length===0 || colours.length===0) && <p className="warning">Create at least one active part type and colour before creating a run.</p>}<form action={createPaintRun} className="card"><div className="grid"><div className="field"><label>Planned date</label><input className="input" type="date" name="planned_date" /></div><div className="field"><label>Notes</label><textarea className="input" name="notes" /></div></div><h2>Lines</h2><p className="muted">Use one row per part type and colour combination. Leave unused rows blank.</p>{slots.map((_,i)=><div className="line-card grid" key={i}><div className="field"><label>Part type</label><select name="part_type_id"><option value="">Select part</option>{parts.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div><div className="field"><label>Colour</label><select name="colour_id"><option value="">Select colour</option>{colours.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div><div className="field"><label>Loaded quantity</label><input className="input" type="number" min="1" step="1" name="qty" /></div></div>)}<div className="actions"><button name="action" value="draft" className="secondary">Save as DRAFT</button><button name="action" value="confirm">Confirm loading</button></div></form></>;
+}

@@ -28,18 +28,20 @@ export function nullableText(value: FormDataEntryValue | null) { const v = text(
 
 export async function listPartTypes(includeInactive = true): Promise<MasterRow[]> {
   const db = sql();
-  return db`select * from paint_part_types where ${includeInactive} or is_active = true order by is_active desc, name asc` as Promise<MasterRow[]>;
+  const rows = await db`select * from paint_part_types where ${includeInactive} or is_active = true order by is_active desc, name asc`;
+  return rows as MasterRow[];
 }
 export async function listColours(includeInactive = true): Promise<ColourRow[]> {
   const db = sql();
-  return db`select * from paint_colours where ${includeInactive} or is_active = true order by is_active desc, name asc` as Promise<ColourRow[]>;
+  const rows = await db`select * from paint_colours where ${includeInactive} or is_active = true order by is_active desc, name asc`;
+  return rows as ColourRow[];
 }
 export async function listActivePartTypes() { return listPartTypes(false); }
 export async function listActiveColours() { return listColours(false); }
 
 export async function listPaintRuns(filters: { status?: string; plannedDate?: string; partTypeId?: string; colourId?: string }): Promise<RunSummary[]> {
   const db = sql();
-  return db`
+  const rows = await db`
     select r.*,
       coalesce(sum(l.loaded_qty),0)::int as total_loaded_qty,
       coalesce(sum(l.sprayed_qty),0)::int as total_sprayed_qty,
@@ -55,7 +57,8 @@ export async function listPaintRuns(filters: { status?: string; plannedDate?: st
       and (${filters.partTypeId || null}::uuid is null or exists (select 1 from paint_run_lines x where x.paint_run_id = r.id and x.part_type_id = ${filters.partTypeId || null}::uuid))
       and (${filters.colourId || null}::uuid is null or exists (select 1 from paint_run_lines x where x.paint_run_id = r.id and x.colour_id = ${filters.colourId || null}::uuid))
     group by r.id
-    order by r.created_at desc` as Promise<RunSummary[]>;
+    order by r.created_at desc`;
+  return rows as RunSummary[];
 }
 
 export async function getPaintRun(id: string): Promise<RunDetail | null> {

@@ -1,9 +1,12 @@
 "use server";
 
 import { neon } from "@neondatabase/serverless";
+import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { nullableText, PAINT_STATUSES, text, toInt } from "./paint-db";
+
+type PaintSqlClient = NeonQueryFunction<false, false>;
 
 function db() {
   const url = process.env.DATABASE_URL;
@@ -52,7 +55,7 @@ export async function toggleColour(formData: FormData) {
   revalidatePath("/paint/master-data/colours");
 }
 
-async function assertActive(database: ReturnType<typeof neon>, partId: string, colourId: string) {
+async function assertActive(database: PaintSqlClient, partId: string, colourId: string) {
   const rows = await database`select (select is_active from paint_part_types where id=${partId}::uuid) as part_active, (select is_active from paint_colours where id=${colourId}::uuid) as colour_active` as { part_active: boolean | null; colour_active: boolean | null }[];
   if (!rows[0]?.part_active) throw new Error("Selected part type is not active.");
   if (!rows[0]?.colour_active) throw new Error("Selected colour is not active.");
